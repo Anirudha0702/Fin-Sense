@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "fin-sense",
+    "name": "Fin Sense",
     "slug": "fin-sense",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -32,11 +32,23 @@
           "image": "./assets/images/splash-icon.png",
           "imageWidth": 76
         }
-      ]
+      ],
+      "expo-sqlite"
     ],
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
-    }
+    },
+    "extra": {
+      "router": {
+        "asyncRoutes": {
+          "web": true
+        }
+      },
+      "eas": {
+        "projectId": "93caf187-431d-40c5-be89-22b229d63f4b"
+      }
+    },
+    "owner": "robinefieds-team"
   }
 }

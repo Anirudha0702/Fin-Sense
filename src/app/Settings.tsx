@@ -1,0 +1,10 @@
+import SetMonthlyBudget from "@/components/SetMonthlyBudget";
+import { View } from "react-native";
+
+export default function Settings() {
+  return (
+    <View>
+      <SetMonthlyBudget />
+    </View>
+  );
+}

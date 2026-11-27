@@ -1,56 +1,109 @@
-# Welcome to your Expo app 👋
+# Fin Sense
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+Fin Sense is a mobile-first personal finance app for tracking a monthly budget in Indian rupees. It is built with Expo and React Native, uses file-based navigation, and keeps its data locally in SQLite.
 
-## Get started
+> **Project status:** The budget-setting flow and dashboard are functional. Transaction entry, transaction history, and analytics routes are scaffolded and awaiting their UI and data integrations.
 
-1. Install dependencies
+## What is included
 
-   ```bash
-   npm install
-   ```
+- A responsive light and dark theme that follows the device preference
+- A home dashboard with a time-aware greeting and current-month budget card
+- Monthly budget creation and updates in INR
+- Local, offline-first SQLite persistence via Drizzle ORM
+- Database migrations applied automatically when the app starts
+- Expo Router navigation with Home, History, Pay, and Analytics tabs
+- A settings screen and toast feedback for successful or failed budget updates
 
-2. Start the app
+## Tech stack
 
-   ```bash
-   npx expo start
-   ```
+| Area | Tooling |
+| --- | --- |
+| App framework | Expo SDK 58, React Native, React 19 |
+| Navigation | Expo Router |
+| Local database | Expo SQLite + Drizzle ORM |
+| Styling | React Native styles and a shared theme |
+| Language | TypeScript |
+| Package manager | pnpm |
 
-In the output, you'll find options to open the app in a
+## Getting started
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+### Prerequisites
 
-You can start developing by editing the files inside the **src/app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+- Node.js (current LTS recommended)
+- pnpm (enable with `corepack enable` if needed)
+- Expo Go on a physical device, or an Android emulator / iOS Simulator
 
-## Get a fresh project
-
-When you're ready, run:
+### Install and run
 
 ```bash
-npm run reset-project
+pnpm install
+pnpm start
 ```
 
-This command will move the starter code to the **example** directory and create a blank **src/app** directory where you can start developing.
+After the Expo development server starts, scan the QR code with Expo Go or choose a target from the terminal.
 
-### Other setup steps
+You can also start a specific platform directly:
 
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
+```bash
+pnpm android
+pnpm ios
+pnpm web
+```
 
-## Learn more
+## Quality checks
 
-To learn more about developing your project with Expo, look at the following resources:
+Run these before opening a pull request:
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+```bash
+pnpm lint
+pnpm exec tsc --noEmit
+```
 
-## Join the community
+## How it works
 
-Join our community of developers creating universal apps.
+On first launch, the root layout runs the checked-in Drizzle migrations against a local `fin-sense.db` SQLite database. Setting a monthly budget inserts or updates the record for the current month and year. Budget amounts are stored in paise, so `₹1` is persisted as `100`; this avoids floating-point rounding errors.
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+The active dashboard currently reads the current month's budget from the database. Its spending display is still sample UI data until the transaction flow is connected.
+
+## Project structure
+
+```text
+src/
+├── app/                    # Expo Router routes and navigation layouts
+│   ├── (tabs)/              # Home, History, Pay, and Analytics tabs
+│   └── Settings.tsx         # Monthly-budget settings screen
+├── components/              # Reusable dashboard and budget UI
+├── constants/               # Theme tokens and transaction enums
+├── database/
+│   ├── schemas/             # Drizzle SQLite table definitions
+│   └── repositories/        # Database access layer
+├── hooks/                   # Shared React hooks
+└── services/                # Input validation and domain logic
+
+drizzle/                     # Generated SQL migrations and migration journal
+assets/                      # App icons and splash assets
+```
+
+## Current routes
+
+| Route | Purpose | Status |
+| --- | --- | --- |
+| `/` | Redirects to the tab navigator | Ready |
+| `/(tabs)` | Home dashboard and monthly budget overview | Ready |
+| `/Settings` | Set or update the current month's budget | Ready |
+| `/(tabs)/Create` | Create a transaction | Scaffolded |
+| `/(tabs)/Transactions` | Transaction history | Scaffolded |
+| `/(tabs)/Analytics` | Spending analytics | Scaffolded |
+
+## Data model
+
+The app already defines tables for:
+
+- **Budgets:** one record per month and year, with a unique month/year constraint.
+- **Transactions:** title, optional description, amount, currency, payment method, category, and timestamps.
+
+Supported payment methods are UPI, cash, credit card, debit card, and bank transfer. Transaction categories include food, travel, shopping, bills, entertainment, health, and others.
+
+## License
+
+This project is licensed under the [MIT License](LICENSE).
