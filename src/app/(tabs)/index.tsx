@@ -1,11 +1,13 @@
+import AddTransactionCard from "@/components/AddTransactionCard";
 import GreetingCard from "@/components/GreetingCard";
-import Header from "@/components/Header";
 import SpendingKPI from "@/components/SpendingKPI";
 import { useTheme } from "@/hooks/useTheme";
+import { useRouter } from "expo-router";
 import { View } from "react-native";
 
 export default function HomeScreen() {
   const { colors } = useTheme();
+  const router = useRouter();
 
   return (
     <View
@@ -17,6 +19,7 @@ export default function HomeScreen() {
     >
       <GreetingCard />
       <SpendingKPI />
+      <AddTransactionCard />
     </View>
   );
 }

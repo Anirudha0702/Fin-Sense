@@ -37,3 +37,18 @@ export const transactions = sqliteTable("transactions", {
 
 export type Transaction = typeof transactions.$inferSelect;
 export type NewTransaction = typeof transactions.$inferInsert;
+export type TransactionCursor = {
+  id: number;
+  createdAt: Date;
+};
+
+export type TransactionPaginationInput = {
+  limit?: number;
+  cursor?: TransactionCursor | null;
+};
+
+export type TransactionPaginationResponse = {
+  data: Transaction[];
+  nextCursor: TransactionCursor | null;
+  hasMore: boolean;
+};

@@ -1,19 +1,20 @@
+import Header from "@/components/Header";
+import { Spacing } from "@/constants/theme";
+import { db } from "@/database";
+import { useTheme } from "@/hooks/useTheme";
 import {
   DarkTheme,
   DefaultTheme,
   ThemeProvider,
 } from "@react-navigation/native";
-import Toast from "react-native-toast-message";
-import Header from "@/components/Header";
-import { Spacing } from "@/constants/theme";
-import { db } from "@/database";
-import { useTheme } from "@/hooks/useTheme";
 import { useMigrations } from "drizzle-orm/expo-sqlite/migrator";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { ActivityIndicator, Text } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import Toast from "react-native-toast-message";
 import migrations from "../../drizzle/migrations";
+
 export default function RootLayout() {
   const { colors, isDark } = useTheme();
   const { success, error } = useMigrations(db, migrations);
@@ -32,6 +33,7 @@ export default function RootLayout() {
       notification: colors.error,
     },
   };
+
   if (error) return <Text>{error.message}</Text>;
   if (!success) return <ActivityIndicator />;
   return (
@@ -53,10 +55,20 @@ export default function RootLayout() {
           }}
         >
           <Stack.Screen name="(tabs)" />
-          <Stack.Screen name="settings" />
+          <Stack.Screen name="Settings" />
+          <Stack.Screen
+            name="AddTransaction"
+            options={{
+              presentation: "transparentModal",
+              animation: "slide_from_bottom",
+              contentStyle: {
+                backgroundColor: "transparent",
+              },
+            }}
+          />
         </Stack>
         <StatusBar style={isDark ? "light" : "dark"} />
-         <Toast position="bottom" bottomOffset={30} />
+        <Toast position="bottom" bottomOffset={30} />
       </ThemeProvider>
     </SafeAreaView>
   );

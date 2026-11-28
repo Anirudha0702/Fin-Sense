@@ -1,47 +1,45 @@
 import { FontSize, FontWeight, Radius, Spacing } from "@/constants/theme";
-import { Budget } from "@/database/schemas";
+import { useMonthlyOverview } from "@/hooks/useMonthlyOverview";
 import { useTheme } from "@/hooks/useTheme";
-import { budgetService } from "@/services/budget";
 import { MaterialIcons } from "@expo/vector-icons";
-import { useFocusEffect, useRouter } from "expo-router";
-import { useCallback, useState } from "react";
-import { Pressable, Text, View } from "react-native";
-import Toast from "react-native-toast-message";
+import { useRouter } from "expo-router";
+import {
+  ActivityIndicator,
+  Pressable,
+  Text,
+  View,
+} from "react-native";
 import BudgetProgressBar from "./BudgetUsageProgressBar";
+
+const formatAmount = (amount: number): string =>
+  (amount / 100).toLocaleString("en-IN", {
+    maximumFractionDigits: 2,
+  });
 
 export default function SpendingKPI() {
   const { colors } = useTheme();
   const router = useRouter();
 
-  const [budget, setBudget] = useState<Budget | null>(null);
+  const {
+    budget,
+    totalSpent,
+    dailyAverage,
+    remainingBudget,
+    budgetPercentage,
+    loading,
+    error,
+  } = useMonthlyOverview();
 
-  useFocusEffect(
-    useCallback(() => {
-      let active = true;
+  const hasBudget = budget !== null && budget.currency === "INR";
+  console.log(budget?.amount,totalSpent)
 
-      const fetchBudget = async () => {
-        try {
-          const res = await budgetService.getCurrentMonthBudget();
+  const budgetColor =
+    budgetPercentage >= 100
+      ? "#EF4444"
+      : budgetPercentage >= 80
+        ? "#F59E0B"
+        : colors.accent;
 
-          if (active) {
-            setBudget(res);
-          }
-        } catch (error) {
-          console.error(error);
-          Toast.show({
-            type: "error",
-            text1: "Unable to fetch budget",
-          });
-        }
-      };
-
-      fetchBudget();
-
-      return () => {
-        active = false;
-      };
-    }, []),
-  );
   return (
     <View
       style={{
@@ -49,8 +47,10 @@ export default function SpendingKPI() {
         borderColor: colors.border,
         borderRadius: Radius.sm,
         padding: Spacing.md,
+        gap: Spacing.md,
       }}
     >
+      {/* Header */}
       <View
         style={{
           flexDirection: "row",
@@ -66,43 +66,58 @@ export default function SpendingKPI() {
         >
           THIS MONTH
         </Text>
-        {budget ? (
-          <Text
-            style={{
-              color: colors.accent,
-              borderColor: colors.border,
-              fontSize: FontSize.xs,
-              borderWidth: 1,
-              paddingInline: Spacing.md,
-              backgroundColor: `${colors.accent}20`,
-            }}
-          >
-            0% USED
-          </Text>
-        ) : (
-          <Pressable
-            onPress={() => router.navigate("/Settings")}
-            style={{
-              flexDirection: "row",
-              alignItems: "center",
-              justifyContent: "center",
-              backgroundColor: colors.primary,
-              padding: Spacing.sm,
-              borderRadius: 8,
-              gap: 8,
-            }}
-          >
-            <MaterialIcons
-              name="account-balance-wallet"
-              size={20}
-              color={colors.text}
-            />
-            <Text style={{ color: colors.text, fontSize: 16 }}>Set Budget</Text>
-          </Pressable>
+
+        {!loading && !error && (
+          hasBudget ? (
+            <Text
+              style={{
+                color: budgetColor,
+                borderColor: colors.border,
+                fontSize: FontSize.xs,
+                borderWidth: 1,
+                paddingHorizontal: Spacing.md,
+                paddingVertical: Spacing.sm,
+                borderRadius: Radius.sm,
+                backgroundColor: `${budgetColor}20`,
+              }}
+            >
+              {budgetPercentage.toFixed(0)}% USED
+            </Text>
+          ) : (
+            <Pressable
+              onPress={() => router.navigate("/Settings")}
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                backgroundColor: colors.primary,
+                padding: Spacing.sm,
+                borderRadius: 8,
+                gap: 8,
+              }}
+            >
+              <MaterialIcons
+                name="account-balance-wallet"
+                size={20}
+                color={colors.text}
+              />
+
+              <Text style={{ color: colors.text }}>
+                Set Budget
+              </Text>
+            </Pressable>
+          )
         )}
       </View>
-      {budget && (
-        <View>
+
+      {error ? (
+        <Text style={{ color: "#EF4444" }}>
+          Failed to load monthly overview
+        </Text>
+      ) : loading ? (
+        <ActivityIndicator color={colors.accent} />
+      ) : (
+        <>
+          {/* Total spending */}
           <View
             style={{
               flexDirection: "row",
@@ -117,19 +132,101 @@ export default function SpendingKPI() {
                 fontWeight: FontWeight.bold,
               }}
             >
-              ₹ 1,000.
+              ₹ {formatAmount(totalSpent)}
             </Text>
-            <Text
-              style={{
-                color: colors.text,
-                fontSize: FontSize.sm,
-              }}
-            >
-              of ₹ {(budget.amount / 100).toLocaleString("en-IN")}
-            </Text>
+
+            {hasBudget && (
+              <Text
+                style={{
+                  color: colors.text,
+                  fontSize: FontSize.sm,
+                  opacity: 0.7,
+                }}
+              >
+                of ₹ {formatAmount(budget.amount)}
+              </Text>
+            )}
           </View>
-          <BudgetProgressBar budget={budget.amount / 100} spent={1000} />
-        </View>
+
+          {/* Budget progress */}
+          {hasBudget && (
+            <BudgetProgressBar
+              budget={budget.amount / (100*100)}
+              spent={totalSpent / (100*100)}
+            />
+          )}
+
+          {/* Additional KPIs */}
+          <View
+            style={{
+              flexDirection: "row",
+              borderTopWidth: 1,
+              borderTopColor: colors.border,
+              paddingTop: Spacing.md,
+            }}
+          >
+            {/* Daily average */}
+            <View style={{ flex: 1, gap: Spacing.sm }}>
+              <Text
+                style={{
+                  color: colors.text,
+                  fontSize: FontSize.xs,
+                  opacity: 0.6,
+                }}
+              >
+                DAILY AVERAGE
+              </Text>
+
+              <Text
+                style={{
+                  color: colors.text,
+                  fontWeight: FontWeight.bold,
+                  fontSize: FontSize.xxl,
+                }}
+              >
+                ₹ {formatAmount(dailyAverage)}
+              </Text>
+            </View>
+
+            {/* Remaining budget */}
+            {remainingBudget !== null && hasBudget && (
+              <View
+                style={{
+                  flex: 1,
+                  gap: Spacing.sm,
+                  borderLeftWidth: 1,
+                  borderLeftColor: colors.border,
+                  paddingLeft: Spacing.md,
+                }}
+              >
+                <Text
+                  style={{
+                    color: colors.text,
+                    fontSize: FontSize.xs,
+                    opacity: 0.6,
+                  }}
+                >
+                  {remainingBudget < 0
+                    ? "OVER BUDGET"
+                    : "REMAINING BUDGET"}
+                </Text>
+
+                <Text
+                  style={{
+                    color:
+                      remainingBudget < 0
+                        ? "#EF4444"
+                        : colors.accent,
+                    fontWeight: FontWeight.bold,
+                    fontSize: FontSize.xxl,
+                  }}
+                >
+                  ₹ {formatAmount(Math.abs(remainingBudget))}
+                </Text>
+              </View>
+            )}
+          </View>
+        </>
       )}
     </View>
   );
